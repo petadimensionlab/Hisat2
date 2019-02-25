@@ -10,7 +10,7 @@ is_Rsubread = 'yes'
 Hisat2_dir = '/Users/petadimensionlab/ws/apps/Hisat2/'
 genome_dir = os.path.join(Hisat2_dir,'idx/'+species)
 
-thread_num = 6
+thread_num = 12 
 
 input_dir = '/Users/petadimensionlab/Downloads/test01/output/SRR5063982_hisat/'
 output_dir = '/Users/petadimensionlab/Downloads/test01/output/SRR5063982_hisat/'
@@ -34,7 +34,7 @@ for f in files:
         os.system(cmd)
 
         ## sam to bam ##
-        cmd = 'samtools view -Sb %ssam > %sbam' % (outsamFile,outsamFile)
+        cmd = 'samtools view -@ %s -Sb %ssam > %sbam' % (thread,outsamFile,outsamFile)
         os.system(cmd)
     else:
         fastq_file = os.path.join(input_dir,sID+'.fastq.gz')
@@ -42,7 +42,7 @@ for f in files:
         os.system(cmd)
 
         ## sam to bam ##
-        cmd = 'samtools view -Sb %ssam > %sbam' % (outsamFile,outsamFile)
+        cmd = 'samtools view -@ 8 -Sb %ssam > %sbam' % (outsamFile,outsamFile)
         os.system(cmd)
 
 
