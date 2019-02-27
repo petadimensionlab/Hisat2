@@ -6,8 +6,8 @@ REPanno = '\.g[t|f]f'
 
 argvs = sys.argv
 argc = len(argvs)
-if argc!=11:
-    msg = 'Usage: # python %s <is_sra: yes or no> <is_paired: yes or no> <is_qualitycheck: yes or no> <is_delete_FASTQ: yes or no> <thread-number> <sample name> <species> <annotation> <input-directory> <output-directory>' % (argvs[0])
+if argc!=12:
+    msg = 'Usage: # python %s <is_sra: yes or no> <is_paired: yes or no> <is_qualitycheck: yes or no> <is_delete_FASTQ: yes or no> <thread-number> <sample name> <species> <annotation> <input-directory> <output-directory> <Hisat2 index directory)' % (argvs[0])
     print( msg )
     quit()
 
@@ -22,6 +22,7 @@ species = argvs[7]
 annotation = argvs[8]
 input_dir = argvs[9]
 output_dir = argvs[10]
+Hisat2idx_dir = argvs[11]
 
 ## tools ##
 fastq_dump = 'parallel-fastq-dump'
@@ -32,7 +33,7 @@ bam2rc = os.path.join(ws_dir,'exec_bam2readcount_Hisat2.R')
 
 ## directories ##
 sample_dir = os.path.join(output_dir,samplename)
-Hisat2idx_dir =  os.path.join('/Users/petadimensionlab/ws/ref/Hisat2idx/',species,species)
+speciesidx_dir =  os.path.join(Hisat2idx_dir,species,species)
 
 ## create a directory for given sample ID ##
 if os.path.exists(sample_dir):
@@ -42,7 +43,6 @@ else:
     os.mkdir(sample_dir)
 
 #### Execution ####
-os.chdir(sample_dir)
 if is_sra == 'yes':
     ## 1st step : SRA to FASTQ ##
     msg = '%s : SRA to FASTQ...' % (samplename)
@@ -62,22 +62,34 @@ else:
     print( msg )
     msg = '%s : Copy FASTQ files into an output directory.' % (samplename)
     print( msg )
-    file1 = '%s_1.fastq.gz' % (samplename)
-    file2 = '%s_2.fastq.gz' % (samplename)
-    if os.path.exists(os.path.join(input_dir,file1)):
-        shutil.copy(os.path.join(input_dir,file1),os.path.join(sample_dir,file1))
-    if os.path.exists(os.path.join(input_dir,file2)):
-        shutil.copy(os.path.join(input_dir,file2),os.path.join(sample_dir,file2))
+    if is_paired=='yes':
+        file1 = '%s_1.fastq.gz' % (samplename)
+        file2 = '%s_2.fastq.gz' % (samplename)
+        if os.path.exists(os.path.join(input_dir,file1)):
+            shutil.copy(os.path.join(input_dir,file1),os.path.join(sample_dir,file1))
+        if os.path.exists(os.path.join(input_dir,file2)):
+            shutil.copy(os.path.join(input_dir,file2),os.path.join(sample_dir,file2))
+    else:
+        file = '%s.fastq.gz' % (samplename)
+        if os.path.exists(os.path.join(input_dir,file)):
+            shutil.copy(os.path.join(input_dir,file),os.path.join(sample_dir,file))
 
 ## 2nd step : fastp ##
 if is_qualitycheck == 'yes':
     msg = '%s : fastp...' % (samplename)
     print( msg )
+    report_file = os.path.join(sample_dir,samplename+'.html')
     if is_paired =='yes':
-        cmd = '%s -w %s -h %s.html -i %s_1.fastq.gz -I %s_2.fastq.gz -o %s_trim_paired_1.fastq.gz -O %s_trim_paired_2.fastq.gz' % (fastp,int(thread_num),samplename,samplename,samplename,samplename,samplename)
+        fwd_fastq = os.path.join(sample_dir,samplename+'_1.fastq.gz')
+        rev_fastq = os.path.join(sample_dir,samplename+'_2.fastq.gz')
+        trim_fwd_fastq = os.path.join(sample_dir,samplename+'_trim_paired_1.fastq.gz')
+        trim_rev_fastq = os.path.join(sample_dir,samplename+'_trim_paired_2.fastq.gz')
+        cmd = '%s -w %s -h %s -i %s -I %s -o %s -O %s' % (fastp,int(thread_num),report_file,fwd_fastq,rev_fastq,trim_fwd_fastq,trim_rev_fastq)
         os.system(cmd)
     else:
-        cmd = '%s -w %s -h %s.html -i %s_1.fastq.gz -o %s_trim.fastq.gz' % (fastp,int(thread_num),samplename,samplename,samplename)
+        fastq = os.path.join(sample_dir,samplename+'.fastq.gz')
+        trim_fastq = os.path.join(sample_dir,samplename+'_trim.fastq.gz')
+        cmd = '%s -w %s -h %s -i %s -o %s' % (fastp,int(thread_num),report_file,fastq,trim_fastq)
         print( cmd )
         os.system(cmd)
 
@@ -87,12 +99,12 @@ print( msg )
 samfile = os.path.join(sample_dir,samplename)
 if is_paired =='yes':
     if is_qualitycheck=='yes':
-        fwd_fastq = os.path.join(output_dir,samplename,samplename+'_trim_paired_1.fastq.gz')
-        rev_fastq = os.path.join(output_dir,samplename,samplename+'_trim_paired_2.fastq.gz')
+        fwd_fastq = os.path.join(sample_dir,samplename+'_trim_paired_1.fastq.gz')
+        rev_fastq = os.path.join(sample_dir,samplename+'_trim_paired_2.fastq.gz')
     else:
-        fwd_fastq = os.path.join(input_dir,samplename,samplename+'_1.fastq.gz')
-        rev_fastq = os.path.join(input_dir,samplename,samplename+'_2.fastq.gz')
-    cmd = 'hisat2 -x %s -1 %s -2 %s -p %s -S %s.sam' % (Hisat2idx_dir,fwd_fastq,rev_fastq,int(thread_num),samfile)
+        fwd_fastq = os.path.join(input_dir,samplename+'_1.fastq.gz')
+        rev_fastq = os.path.join(input_dir,samplename+'_2.fastq.gz')
+    cmd = 'hisat2 -x %s -1 %s -2 %s -p %s -S %s.sam' % (speciesidx_dir,fwd_fastq,rev_fastq,int(thread_num),samfile)
     print( cmd )
     os.system(cmd)
     ## sam to bam ##
@@ -101,10 +113,10 @@ if is_paired =='yes':
     os.system(cmd)
 else:
     if is_qualitycheck=='yes':
-        fastq_file = os.path.join(output_dir,samplename+'_trim.fastq.gz')
+        fastq_file = os.path.join(sample_dir,samplename+'_trim.fastq.gz')
     else:
         fastq_file = os.path.join(input_dir,samplename+'.fastq.gz')
-    cmd = 'hisat2 -x %s -U %s -p %s -S %s.sam' % (Hisat2idx_dir,fastq_file,int(thread_num),samfile)
+    cmd = 'hisat2 -x %s -U %s -p %s -S %s.sam' % (speciesidx_dir,fastq_file,int(thread_num),samfile)
     print( cmd )
     os.system(cmd)
     ## sam to bam ##
@@ -113,6 +125,7 @@ else:
     os.system(cmd)
 
 ## 4th step : Extract read count from bam file ##
+os.chdir(sample_dir)
 msg = '%s : Bam to read count...' % (samplename)
 print( msg )
 cmd = 'R --vanilla --slave --args %s %s %s %s < %s' % (annotation,samplename,thread_num,sample_dir,bam2rc)
