@@ -15,7 +15,7 @@ Hisat2idx_dir =  os.path.join('/Users/petadimensionlab/ws/ref/Hisat2idx/'+specie
 genome_dir = '/Users/petadimensionlab/ws/ref/genome/'
 
 if not os.path.exists(Hisat2idx_dir):
-	cmd = 'mkdir %s' % (idx_dir)
+	cmd = 'mkdir %s' % (Hisat2idx_dir)
 	os.system(cmd)
 
 ## options ##

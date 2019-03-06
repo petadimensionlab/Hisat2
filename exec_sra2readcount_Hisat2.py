@@ -80,8 +80,8 @@ if is_qualitycheck == 'yes':
     print( msg )
     report_file = os.path.join(sample_dir,samplename+'.html')
     if is_paired =='yes':
-        fwd_fastq = os.path.join(sample_dir,samplename+'_1.fastq.gz')
-        rev_fastq = os.path.join(sample_dir,samplename+'_2.fastq.gz')
+        fwd_fastq = os.path.join(ws_dir,samplename+'_1.fastq.gz')
+        rev_fastq = os.path.join(ws_dir,samplename+'_2.fastq.gz')
         trim_fwd_fastq = os.path.join(sample_dir,samplename+'_trim_paired_1.fastq.gz')
         trim_rev_fastq = os.path.join(sample_dir,samplename+'_trim_paired_2.fastq.gz')
         cmd = '%s -w %s -h %s -i %s -I %s -o %s -O %s' % (fastp,int(thread_num),report_file,fwd_fastq,rev_fastq,trim_fwd_fastq,trim_rev_fastq)
@@ -138,8 +138,8 @@ if is_delete_FASTQ == 'yes':
     msg = '%s : Delete copied/dumped FASTQ files...' % (samplename)
     print( msg )
     if is_paired =='yes':
-        fastq1 = '%s_1.fastq.gz' % (samplename)
-        fastq2 = '%s_2.fastq.gz' % (samplename)
+        fastq1 = os.path.join(ws_dir,samplename+'_1.fastq.gz')
+        fastq2 = os.path.join(ws_dir,samplename+'_2.fastq.gz')
         cmd = 'rm %s %s' % (fastq1,fastq2)
     else:
         fastq = '%s.fastq.gz' % (samplename)

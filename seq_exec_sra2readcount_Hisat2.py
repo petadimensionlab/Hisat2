@@ -33,7 +33,7 @@ for line in fr:
         os.mkdir(output_dir)
     msg = '%s is now processing...' % (samplename)
     print( msg )
-    cmd = 'python exec_sra2readcount_Hisat2.py %s %s %s %s %d %s %s %s %s %s %s' % (is_sra,is_paired,is_qualitycheck,is_delete_FASTQ,thread_num,samplename,species,annotation,input_dir,output_dir,Hisat2idx_dir)
+    cmd = 'python exec_sra2readcount_Hisat2.py %s %s %s %s %s %s %s %s %s %s %s' % (is_sra,is_paired,is_qualitycheck,is_delete_FASTQ,thread_num,samplename,species,annotation,input_dir,output_dir,Hisat2idx_dir)
     print( cmd )
     os.system(cmd)
 
